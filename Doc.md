@@ -27,3 +27,10 @@ We use a **System Role** to constrain the AI's behavior:
 | :--- | :--- |
 | `GITHUB_TOKEN` | Required for authenticating with Scaledown/GitHub Models. |
 | `SCALEDOWN_API_URL` | The endpoint for the AI model processing. |
+## 🔄 Execution Flow Detail
+
+1. **Input Validation:** User code is captured and sent via Fetch API.
+2. **Authentication:** Backend validates the request and attaches the `GITHUB_TOKEN`.
+3. **AI Inference:** The Scaledown API processes the code based on strict system instructions.
+4. **Latency Measurement:** The backend tracks the round-trip time (Runtime) in milliseconds.
+5. **Categorized Display:** The UI parses the response and applies conditional formatting (Red/Green).
