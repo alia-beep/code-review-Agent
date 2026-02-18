@@ -1,73 +1,53 @@
+import time
 import os
-from github import Github
-from openai import OpenAI
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from dotenv import load_dotenv
+from openai import OpenAI
 
-# 1. Environment variables load karein (.env file se)
 load_dotenv()
+app = FastAPI()
 
-# 2. ScaleDown AI Client setup
-# ScaleDown aksar OpenAI ka format use karta hai isliye hum OpenAI library use kar rahe hain
-client = OpenAI(
-    api_key=os.getenv("SCALEDOWN_API_KEY"),
-    base_url=os.getenv("SCALEDOWN_BASE_URL")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-def get_ai_review(code_diff):
-    """
-    ScaleDown API ko code bhej kar review mangna
-    """
+client = OpenAI(
+    base_url=os.getenv("SCALEDOWN_API_URL"),
+    api_key=os.getenv("GITHUB_TOKEN")
+)
+
+class CodeInput(BaseModel):
+    code: str
+
+@app.post("/review")
+async def review_code(input: CodeInput):
+    start_time = time.time()
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",  # Agar ye model na chale toh "gemini-1.5-flash" try karein
+            
             messages=[
-                {
-                    "role": "system", 
-                    "content": "You are a Senior Software Engineer. Review the code diff for bugs, security issues, and clean code. Be concise."
+                { "role": "system", "content": "You are a code reviewer. Give exactly 3 points. 1. Start bugs with 'ERROR:'. 2. Start suggestions with 'TIP:'. 3. DO NOT use markdown code blocks (```) or bold symbols (**). Keep it as plain text only."
                 },
-                {
-                    "role": "user", 
-                    "content": f"Review this code change:\n\n{code_diff}"
-                }
-            ]
+                {"role": "user", "content": input.code}
+                ],
+            model="gpt-4o"
         )
-        return response.choices[0].message.content
+        ai_msg = response.choices[0].message.content
+        runtime_ms = round((time.time() - start_time) * 1000, 2)
+
+        return {
+            "status": "success",
+            "runtime": f"{runtime_ms} ms",
+            "full_review": ai_msg.split("\n")
+        }
     except Exception as e:
-        return f"AI Review error: {str(e)}"
-
-def start_review():
-    # 3. GitHub Connection
-    g = Github(os.getenv("GITHUB_TOKEN"))
-    
-    # User se input lein
-    repo_name = input("Enter Repo Name (e.g., username/repository): ")
-    pr_number = int(input("Enter Pull Request Number: "))
-
-    try:
-        repo = g.get_repo(repo_name)
-        pr = repo.get_pull(pr_number)
-        
-        print(f"🔍 Fetching code for PR #{pr_number}...")
-        
-        files = pr.get_files()
-        
-        for file in files:
-            if file.patch: # Sirf un files ko check karein jisme badlav (diff) hai
-                print(f"🛠️ Reviewing {file.filename}...")
-                
-                # AI se review lein
-                review_comment = get_ai_review(file.patch)
-                
-                # 4. GitHub par comment post karein
-                formatted_comment = f"### 🤖 AI Code Review for `{file.filename}`\n\n{review_comment}"
-                pr.create_issue_comment(formatted_comment)
-                
-                print(f"✅ Review posted for {file.filename}")
-        
-        print("\n🎉 All files reviewed successfully!")
-
-    except Exception as e:
-        print(f"❌ Error: {str(e)}")
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
-    start_review()
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

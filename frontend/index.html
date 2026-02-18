@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Code Reviewer</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; padding: 40px; text-align: center; }
+        .container { max-width: 800px; margin: auto; background: #1e293b; padding: 20px; border-radius: 12px; }
+        textarea { width: 95%; height: 200px; background: #020617; color: #38bdf8; border: 1px solid #334155; padding: 15px; border-radius: 8px; font-family: monospace; }
+        button { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        #output { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AI Automated Code Review</h1>
+        <textarea id="codeInput" placeholder="Paste your code here..."></textarea><br>
+        <button onclick="startReview()">Run Automated Review</button>
+        
+        <div id="output"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

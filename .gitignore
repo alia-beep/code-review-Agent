@@ -1,13 +1,8 @@
-# Ignore virtual environments
-venv/
-backend/venv/
-
-# Python cache
+.env
 __pycache__/
 *.pyc
-
-# Environment variables
-.env
-
-# Node modules (if frontend later)
-node_modules/
+*.pyo
+*.pyd
+.Python
+venv/
+.env.example
